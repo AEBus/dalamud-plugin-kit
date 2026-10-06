@@ -28,7 +28,7 @@ on:
       plogon-ref:
         description: Branch, tag or commit of goatcorp/Plogon to use.
         type: string
-        default: main
+        default: master
 
 permissions:
   contents: read

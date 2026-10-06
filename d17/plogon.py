@@ -32,7 +32,7 @@ def build(plugin: Plugin, sha: str, icon: bytes) -> tuple[bool, Path]:
     plogon = KIT_ROOT / ".cache" / "Plogon"
     if (plogon / ".git").exists():
         shell.git(plogon, "fetch", "-q", "origin")
-        shell.git(plogon, "reset", "-q", "--hard", "origin/main")
+        shell.git(plogon, "reset", "-q", "--hard", "origin/HEAD")
     else:
         plogon.parent.mkdir(parents=True, exist_ok=True)
         shell.run(["git", "clone", "-q", PLOGON_REPO, str(plogon)])
