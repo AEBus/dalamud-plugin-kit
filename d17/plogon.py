@@ -44,11 +44,18 @@ def build(plugin: Plugin, sha: str, icon: bytes) -> tuple[bool, Path]:
     manifests = work / "manifests"
     manifests.mkdir()
     prepare_manifests(manifests, plugin, sha, icon)
+    # The manifests of D17's main branch, which Plogon compares with: empty, as for a first submission.
+    master = work / "master"
+    for track_folder in TRACKS.values():
+        (master / track_folder).mkdir(parents=True)
+    shell.git(master, "init", "-q")
+    shell.git(master, "-c", "user.name=d17", "-c", "user.email=d17@localhost", "commit", "-q", "--allow-empty", "-m", "master")
     for name in ("output", "work", "artifacts"):
         (work / name).mkdir()
     command = [
         "dotnet", "run", "-c", "Release", "--project", str(plogon / "Plogon" / "Plogon.csproj"), "--",
         f"--manifest-folder={manifests}",
+        f"--master-manifest-folder={master}",
         f"--output-folder={work / 'output'}",
         f"--work-folder={work / 'work'}",
         f"--static-folder={plogon / 'Plogon' / 'static'}",

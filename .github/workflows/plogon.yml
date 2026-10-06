@@ -80,12 +80,17 @@ jobs:
           git -C manifests init -q
           git -C manifests add .
           git -C manifests -c user.name=ci -c user.email=ci@localhost commit -q -m manifest
+          # The manifests of D17's main branch, which Plogon compares a pull request with: empty here, as for a first submission.
+          mkdir -p master/stable master/testing/live
+          git -C master init -q
+          git -C master -c user.name=ci -c user.email=ci@localhost commit -q --allow-empty -m master
 
       - name: Build with Plogon
         working-directory: plogon/Plogon
         run: |
           dotnet run -c Release -- \
             --manifest-folder="$GITHUB_WORKSPACE/manifests" \
+            --master-manifest-folder="$GITHUB_WORKSPACE/master" \
             --output-folder="$GITHUB_WORKSPACE/output" \
             --work-folder="$GITHUB_WORKSPACE/work" \
             --static-folder="$PWD/static" \
