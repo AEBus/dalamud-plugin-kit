@@ -9,5 +9,7 @@ d17_clone = "C:/Git/DalamudPluginsD17"
 [plugins."My.Plugin"]
 path = "C:/Git/My.Plugin"
 # preflight = ["bash", "tools/check.sh"]
+# On Windows, name Git Bash itself, since a plain "bash" can resolve to WSL, which does not understand Windows paths:
+# preflight = ["C:/Program Files/Git/bin/bash.exe", "C:/Git/My.Plugin.Dev/tools/check.sh"]
 # Words that must never appear in the README, the changelog or the json manifest, such as the name of a custom-repo plugin your plugin integrates with.
 # forbidden_public_words = ["SomeCustomRepoPlugin"]
