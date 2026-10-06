@@ -67,7 +67,8 @@ jobs:
           ICON: ${{ inputs.icon }}
         run: |
           dir="manifests/testing/live/$NAME"
-          mkdir -p "$dir/images" output work artifacts
+          # Plogon reads both tracks, so stable/ has to exist even when empty.
+          mkdir -p "$dir/images" manifests/stable output work artifacts
           cp "plugin/$ICON" "$dir/images/icon.png"
           cat > "$dir/manifest.toml" <<EOF
           [plugin]

@@ -16,6 +16,9 @@ def prepare_manifests(folder: Path, plugin: Plugin, sha: str, icon: bytes, track
     """Writes a manifests repository in D17's layout with this one plugin; Plogon reads commit dates from its history, so it is committed."""
     target = folder / TRACKS[track] / plugin.internal_name
     (target / "images").mkdir(parents=True)
+    # Plogon reads both tracks, so each folder has to exist even when empty.
+    for track_folder in TRACKS.values():
+        (folder / track_folder).mkdir(parents=True, exist_ok=True)
     data = manifest.updated(None, repository=plugin.repository, commit=sha, owners=plugin.owners, maintainers=[], project_path=plugin.project_path, changelog=None)
     (target / "manifest.toml").write_text(manifest.render(data), encoding="utf-8")
     (target / "images" / "icon.png").write_bytes(icon)
