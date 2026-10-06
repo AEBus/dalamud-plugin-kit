@@ -1,0 +1,101 @@
+# Builds the pushed commit with Plogon, the builder of the official repository, in development mode: same container image, no network during the build, packages from the lock file, the icon checked.
+# A green run here is what "All builds OK!" from D17's bot will say about the same commit. The commit must be in a public repository, since Plogon clones it.
+# Call it from a plugin repository:
+#   jobs:
+#     plogon:
+#       uses: AEBus/dalamud-plugin-kit/.github/workflows/plogon.yml@v1
+#       with:
+#         internal-name: MyPlugin
+#         project-path: MyPlugin
+#         icon: MyPlugin/images/icon.png
+name: Build with Plogon
+
+on:
+  workflow_call:
+    inputs:
+      internal-name:
+        description: The plugin's internal name (its manifest folder in D17).
+        type: string
+        required: true
+      project-path:
+        description: Folder of the plugin's .csproj in the repository.
+        type: string
+        required: true
+      icon:
+        description: Path of the plugin's icon.png in the repository.
+        type: string
+        required: true
+      plogon-ref:
+        description: Branch, tag or commit of goatcorp/Plogon to use.
+        type: string
+        default: main
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
+jobs:
+  plogon:
+    name: Plogon
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the plugin
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: plugin
+
+      - name: Check out Plogon
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: goatcorp/Plogon
+          ref: ${{ inputs.plogon-ref }}
+          path: plogon
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      # Plogon reads manifests in D17's layout from a git repository; this one holds only this plugin.
+      - name: Write the manifest
+        env:
+          NAME: ${{ inputs.internal-name }}
+          PROJECT: ${{ inputs.project-path }}
+          ICON: ${{ inputs.icon }}
+        run: |
+          dir="manifests/testing/live/$NAME"
+          mkdir -p "$dir/images" output work artifacts
+          cp "plugin/$ICON" "$dir/images/icon.png"
+          cat > "$dir/manifest.toml" <<EOF
+          [plugin]
+          repository = "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
+          commit = "$GITHUB_SHA"
+          owners = ["$GITHUB_REPOSITORY_OWNER"]
+          project_path = "$PROJECT"
+          EOF
+          git -C manifests init -q
+          git -C manifests add .
+          git -C manifests -c user.name=ci -c user.email=ci@localhost commit -q -m manifest
+
+      - name: Build with Plogon
+        working-directory: plogon/Plogon
+        run: |
+          dotnet run -c Release -- \
+            --manifest-folder="$GITHUB_WORKSPACE/manifests" \
+            --output-folder="$GITHUB_WORKSPACE/output" \
+            --work-folder="$GITHUB_WORKSPACE/work" \
+            --static-folder="$PWD/static" \
+            --artifact-folder="$GITHUB_WORKSPACE/artifacts" \
+            --build-overrides-file="$GITHUB_WORKSPACE/overrides.toml" \
+            --mode=Development --build-all
+
+      - name: Upload what Plogon built
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: plogon
+          path: artifacts
+          if-no-files-found: warn

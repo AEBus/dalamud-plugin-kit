@@ -1,0 +1,74 @@
+# Builds a Dalamud plugin the way D17 restores it: packages strictly from the committed lock file, against the stable Dalamud release.
+# Call it from a plugin repository:
+#   jobs:
+#     build:
+#       uses: AEBus/dalamud-plugin-kit/.github/workflows/build.yml@v1
+#       with:
+#         project: MyPlugin/MyPlugin.csproj
+name: Build a Dalamud plugin
+
+on:
+  workflow_call:
+    inputs:
+      project:
+        description: Path of the plugin's .csproj in the repository.
+        type: string
+        required: true
+      dalamud:
+        description: Dalamud distribution to build against, "release" or "stg" (staging).
+        type: string
+        default: release
+      runs-on:
+        description: Runner to build on.
+        type: string
+        default: ubuntu-latest
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download Dalamud
+        shell: bash
+        run: |
+          case "${{ inputs.dalamud }}" in
+            release) url=https://goatcorp.github.io/dalamud-distrib/latest.zip ;;
+            stg) url=https://goatcorp.github.io/dalamud-distrib/stg/latest.zip ;;
+            *) echo "::error::dalamud must be release or stg"; exit 1 ;;
+          esac
+          curl -fsSL "$url" -o "$RUNNER_TEMP/dalamud.zip"
+          mkdir -p "$RUNNER_TEMP/dalamud"
+          unzip -q -o "$RUNNER_TEMP/dalamud.zip" -d "$RUNNER_TEMP/dalamud"
+          test -f "$RUNNER_TEMP/dalamud/Dalamud.dll" || { echo "::error::Dalamud.dll is missing from $url"; exit 1; }
+          echo "DALAMUD_HOME=$RUNNER_TEMP/dalamud" >> "$GITHUB_ENV"
+
+      # Plogon builds offline from the lock file, so a lock file that does not match the project fails here first.
+      - name: Restore from the lock file
+        shell: bash
+        run: dotnet restore "${{ inputs.project }}" --locked-mode -p:EnableWindowsTargeting=true
+
+      - name: Build Release
+        shell: bash
+        run: dotnet build "${{ inputs.project }}" -c Release --no-restore -p:EnableWindowsTargeting=true
+
+      - name: Upload the package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: plugin
+          path: "**/bin/**/Release/**/latest.zip"
+          if-no-files-found: warn

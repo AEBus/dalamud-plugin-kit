@@ -1,0 +1,4 @@
+local.toml
+drafts/
+.cache/
+__pycache__/

@@ -1,0 +1,13 @@
+# Copy to local.toml (not committed) and adjust to this machine.
+
+# Your fork of goatcorp/DalamudPluginsD17 and its clone; the clone needs an "upstream" remote for goatcorp/DalamudPluginsD17.
+fork = "YourName/DalamudPluginsD17"
+d17_clone = "C:/Git/DalamudPluginsD17"
+
+# Where each plugin's repository is cloned, and an optional command run there before a submission.
+# The command checks the working tree, so it only runs when the tree is clean and at the submitted commit.
+[plugins."My.Plugin"]
+path = "C:/Git/My.Plugin"
+# preflight = ["bash", "tools/check.sh"]
+# Words that must never appear in the README, the changelog or the json manifest, such as the name of a custom-repo plugin your plugin integrates with.
+# forbidden_public_words = ["SomeCustomRepoPlugin"]

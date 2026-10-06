@@ -1,0 +1,32 @@
+# Copy to .github/workflows/ci.yml in a plugin repository and fill in the paths.
+# Public domain (CC0 1.0), unlike the rest of dalamud-plugin-kit: use it under any license, without attribution.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: AEBus/dalamud-plugin-kit/.github/workflows/build.yml@v1
+    with:
+      project: MyPlugin/MyPlugin.csproj
+
+  # The build D17 would make of the same commit; it clones the public repository, so it runs on pushes, not on pull requests from forks.
+  plogon:
+    if: github.event_name != 'pull_request'
+    uses: AEBus/dalamud-plugin-kit/.github/workflows/plogon.yml@v1
+    with:
+      internal-name: MyPlugin
+      project-path: MyPlugin
+      icon: MyPlugin/images/icon.png

@@ -1,0 +1,9 @@
+# One file per plugin. Paths are relative to the plugin's repository.
+name = "FFXIV Venues Directory"
+internal_name = "FFXIV.Venues.Directory"
+repository = "https://github.com/AEBus/FFXIV.Venues.Directory.git"
+project_path = "FFXIV.Venues.Directory"
+owners = ["AEBus"]
+icon = "FFXIV.Venues.Directory/icon.png"
+changelog = "CHANGELOG.md"
+
