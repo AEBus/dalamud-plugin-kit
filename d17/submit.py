@@ -60,6 +60,7 @@ def prepare(settings: Settings, s: Submission, *, push: bool = True) -> tuple[st
     notes = [
         "The description above goes to the pull request exactly as you write it; nothing below this line is sent.",
         "D17 asks that the description and the AI disclosure are written by a person: https://dalamud.dev/plugin-publishing/ai-policy",
+        f"Keep the description within {draft.MAX_DESCRIPTION} characters; D17 posts it to Discord on the first build. Details can go in a comment after opening.",
         "",
         "Facts:",
         *(f"- {fact}" for fact in facts.collect(s)),

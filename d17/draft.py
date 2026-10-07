@@ -11,6 +11,8 @@ DESCRIPTION_MARKER = "===== Pull request description (sent as written) ====="
 NOTES_MARKER = "===== Notes for you (not sent) ====="
 PLACEHOLDER = "<!-- d17:"
 TEMPLATE = KIT_ROOT / "templates" / "pr-body.md"
+# On a pull request's first build, Plogon posts the description to Discord in one embed, together with the build table and links; an embed holds 4096 characters, and a longer post fails the check after a successful build.
+MAX_DESCRIPTION = 3300
 
 
 class DraftError(Exception):
@@ -45,7 +47,14 @@ def read(path: Path) -> Draft:
         raise DraftError("the description still has '<!-- d17:' placeholders; write those parts yourself (D17 wants the description and the AI disclosure written by a person) and delete the placeholders")
     if not description:
         raise DraftError("the description is empty")
+    if (length := description_length(description)) > MAX_DESCRIPTION:
+        raise DraftError(f"the description has {length} characters; keep it within {MAX_DESCRIPTION}: on the first build D17 posts it to Discord together with the build table, and a longer post fails the check. Shorten it, or post the details as a comment after opening")
     return Draft(title, branch, description)
+
+
+def description_length(description: str) -> int:
+    """Counts as Discord's library does: in UTF-16 code units, so a character outside the Basic Multilingual Plane counts twice."""
+    return len(description.encode("utf-16-le")) // 2
 
 
 def path_for(slug: str, track: str, version: str) -> Path:

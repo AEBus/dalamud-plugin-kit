@@ -36,7 +36,7 @@ A release, from the plugin's repository to the pull request:
    - optionally, that the README, changelog and manifest do not name things they must not, and that the plugin's own check command passes.
 3. `python -m d17 prepare <plugin>` runs the checks, then creates a new branch `<plugin>/<track>/<version>` from upstream `main` in your fork, writes `manifest.toml` (the commit, the changelog section, the icon), pushes it and writes `drafts/<plugin>-<track>-<version>.md`.
 4. Write the description in the draft yourself. The notes below it (what changed since the last build, new packages, newly named hosts, the changelog) are never sent.
-5. `python -m d17 open <plugin>` opens the pull request with your description.
+5. `python -m d17 open <plugin>` opens the pull request with your description. It refuses a description longer than 3300 characters: on the pull request's first build, D17 posts the description to Discord in one embed of at most 4096 characters, together with the build table and links, and a longer post fails the check even though the plugin built. Put further details in a comment after opening.
 6. `python -m d17 status [<plugin>]` lists your pull requests with the bot's build result and reviewers' comments. To rebuild a pull request, comment `bleatbot, rebuild` on it.
 7. After some time in testing, `python -m d17 promote <plugin>` submits the testing build to stable.
 

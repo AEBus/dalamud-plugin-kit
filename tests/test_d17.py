@@ -107,6 +107,24 @@ class DraftTests(unittest.TestCase):
             result = draft.read(path)
             self.assertEqual((result.title, result.branch, result.description), ("My Plugin 1.0.0.0", "my-plugin/testing/1.0.0.0", "Written by me."))
 
+    def test_a_description_longer_than_discord_takes_is_refused(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "draft.md"
+            draft.write(path, title="My Plugin 1.0.0.0", branch="my-plugin/testing/1.0.0.0", notes=[])
+            text = path.read_text(encoding="utf-8")
+            start = text.index(draft.DESCRIPTION_MARKER) + len(draft.DESCRIPTION_MARKER)
+            end = text.index(draft.NOTES_MARKER)
+
+            def with_description(description: str) -> None:
+                path.write_text(text[:start] + "\n\n" + description + "\n\n" + text[end:], encoding="utf-8")
+
+            with_description("a" * draft.MAX_DESCRIPTION)
+            self.assertEqual(len(draft.read(path).description), draft.MAX_DESCRIPTION)
+
+            with_description("a" * (draft.MAX_DESCRIPTION - 1) + "🎵")
+            with self.assertRaisesRegex(draft.DraftError, f"{draft.MAX_DESCRIPTION + 1} characters"):
+                draft.read(path)
+
 
 if __name__ == "__main__":
     unittest.main()
